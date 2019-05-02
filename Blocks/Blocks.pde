@@ -1,9 +1,14 @@
 import controlP5.*;
+import peasy.*;
+
+//cam
+PeasyCam cam;
+CameraState state;
 
 Grid  tableGrid;
 
-int gridX = 20;
-int gridY = 20;
+int gridX = 50;
+int gridY = 30;
 
 int gridStartX = 250;
 int gridStartY = 50;
@@ -19,17 +24,27 @@ boolean enableDraw = false;
 
 boolean enableMap =  false;
 boolean enableColorMap = false;
+boolean enableGrouping = false;
 
+//group blocks
+int groupCounter = 0;
+int groupMax = 4;
+GroupBlock groupBlockTmp = new GroupBlock();
+
+boolean activeAnimation = false;
+boolean recording = false;
 
 Map map;
 
 void setup() {
-  size(1550, 850, P3D);
+  size(1920, 1080, P3D);
   smooth(8);
 
-  tableGrid = new Grid(gridStartX, gridStartY, gridX, gridY);
+  cam = new PeasyCam(this, 500);
+  state = cam.getState();
 
   cp5 = new ControlP5(this);
+  cp5.setAutoDraw(false);
 
   // group number 1, contains 2 bangs
   Group g1 = cp5.addGroup("Gird")
@@ -50,7 +65,7 @@ void setup() {
     .setPosition(10, 10)
     .setSize(75, 75)
     .setMinMax(1, 1, 80, 45)
-    .setValue(20, 10)
+    .setValue(50, 30)
     .moveTo(g1)
     ;
 
@@ -58,19 +73,20 @@ void setup() {
     .setPosition(100, 10)
     .setSize(75, 75)
     .setMinMax(0, 0, 20, 20)
-    .setValue(20, 10)
+    .setValue(8, 8)
     .moveTo(g1)
     ;
 
   cp5.addSlider("blockSize")
     .setPosition(10, 120)
     .setSize(90, 15)
-    .setValue(20)
+    .setValue(28)
     .setRange(10, 100)
     .setGroup(g1)
     ;
 
   //ids
+
 
   cp5.addTextlabel("idGrid")
     .setText("id: ")
@@ -103,26 +119,48 @@ void setup() {
     ;
 
   accordionGrid = cp5.addAccordion("Master")
-    .setPosition(10, 10)
+    .setPosition(10, 20)
     .setWidth(230)
     .addItem(g1)
     .addItem(g3)
     .addItem(g2);
+
+  cp5.addRadioButton("Groups")
+    .setPosition(10, 20)
+    .setSize(20, 20)
+    .addItem("Group_1", 0)
+    .addItem("Group_2", 1)
+    .addItem("Gorup_3", 2)
+    .setGroup(g3)
+    ;
 
   accordionGrid.open(0, 1, 2);
   accordionGrid.setCollapseMode(Accordion.MULTI);
 
   //real map
   map = new Map();
+
+  {
+    float [] gridSize = cp5.getController("gridSize").getArrayValue();
+    float [] gridSpace = cp5.getController("gridSpace").getArrayValue();
+    int blockSize = int(cp5.getController("blockSize").getValue());
+
+    tableGrid = new Grid((int)gridSize[0], (int)gridSize[1], (int)gridSpace[0], (int)gridSpace[1], blockSize);
+  }
 }
 
 
 void draw() {
-  background(190);
+  background(0); //190
 
+
+
+  pushMatrix();
+  translate(-850, -550, 0);
   tableGrid.draw();
-
   tableGrid.drawContour();
+  popMatrix();
+
 
   if (!enableDraw) {
     float [] gridSize = cp5.getController("gridSize").getArrayValue();
@@ -136,6 +174,52 @@ void draw() {
   if (bl != null) {
     cp5.getController("idGrid").setStringValue("id: "+bl.getId());
   }
+
+
+  //density
+  float scaleX = 50.0;
+  float scaleY = 50.0;
+  float scaleZ = 10.0;
+
+  float scale = cp5.getController("density").getValue();
+  //createCube(scaleX, scaleY + scale, scaleZ );
+
+  int wTable = tableGrid.getEndX();
+  int hTable = tableGrid.getEndY();
+  //real map
+
+  if (enableMap) {
+    // map.draw(gridStartX, gridStartY, wTable, hTable);
+  }
+
+  if (!recording) {
+    drawGUI();
+  }
+  //set Colr dimentions
+
+  if (recording) {
+    saveFrame("output/frames-######.png");
+  }
+}
+
+void drawGUI() {
+
+  hint(DISABLE_DEPTH_TEST);
+
+
+
+  cam.beginHUD();
+
+  fill(0);
+  text(frameRate, 10, 10);
+
+  cp5.draw();
+  cam.endHUD();
+  hint(ENABLE_DEPTH_TEST);
+}
+
+void mousePressed() {
+  Block bl = tableGrid.getCurrenBlock(mouseX, mouseY);
 
   int Office = int(cp5.getController("Office").getValue());
   int Residential = int(cp5.getController("Residential").getValue());
@@ -155,36 +239,42 @@ void draw() {
   }
 
   if (Map == 1) {
-    tableGrid.setGridColors(map.getImg());
+    tableGrid.setGridColors(map.getImgDensity(), map.getImgColor());
   }
 
-  //density
-  float scaleX = 50.0;
-  float scaleY = 50.0;
-  float scaleZ = 10.0;
+  //grouping, create group
 
-  float scale = cp5.getController("density").getValue();
-  createCube(scaleX, scaleY + scale, scaleZ );
-
-  int wTable = tableGrid.getEndX();
-  int hTable = tableGrid.getEndY();
-  //real map
-
-  if (enableMap) {
-    map.draw(gridStartX, gridStartY, wTable, hTable);
-  }
-
-  //set Colr dimentions
+  int groupBuildings = int(cp5.getController("Group_1").getValue());
 }
 
 void keyPressed() {
 
+  if (key == '1') { 
+    state = cam.getState();
+    println("pos");
+    printArray(cam.getPosition());
+    println("rot");
+    printArray(cam.getRotations());
+  }
+  
+  if (key == '2') { 
+    cam.setState(state, 18000);
+  }
+  
   if (key == 'a') {
     enableMap = !enableMap;
   }
 
   if (key == 'b') {
     enableColorMap = !enableColorMap;
+  }
+
+  if (key == 'z') {
+    activeAnimation = !activeAnimation;
+  }
+
+  if (key == 'r' || key == 'R') {
+    recording = !recording;
   }
 }
 

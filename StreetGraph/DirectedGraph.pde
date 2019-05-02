@@ -124,4 +124,5 @@ class DirectedGraph {
       n.drawLego();
     }
   }
+  
 }

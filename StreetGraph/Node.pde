@@ -5,8 +5,7 @@
  */
 
 // This is a generic node in a graph
-class Node
-{
+class Node{
   ArrayList<Building> inlinks = new ArrayList<Building>();
   ArrayList<Building> outlinks = new ArrayList<Building>();
 

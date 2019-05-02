@@ -7,7 +7,18 @@ class Block {
   //center position
   int centerPosX;
   int centerPosY;
+  
 
+  //building height
+  int maxheight = 200;
+  int midHeight = int(maxheight/2.0);
+  float bHeight   = midHeight;
+  
+  //animation
+  float finalHeight= midHeight;
+  boolean stopAnim = false;
+  float animCounter = 0.0;
+  
   //size of the block
   int tam = 10; //default size
 
@@ -22,9 +33,10 @@ class Block {
 
   color colorMap;
 
-  Block(int posx, int posy) {
+  Block(int posx, int posy, int tam) {
     this.posx = posx;
     this.posy = posy;
+    this.tam = tam;
 
     //update center
     centerPosX = posx + int((float)tam/2.0);
@@ -34,14 +46,49 @@ class Block {
 
     colorMap = color(0);
   }
+  
+  void updateHeight(int value){
+    finalHeight =  (int)map(value, 50, 255, midHeight, 20);
+    //finalHeight = bHeight;
+  }
 
-  void draw() {
+  void drawBox() {
+    pushMatrix();
+    translate(centerPosX, centerPosY,  -(bHeight - midHeight) ); //max = max_height/2.0
+    //println(   bHeight - midHeight);
+    noFill();
+    stroke(50);
+    fill(250);
+    box(tam, tam, maxheight);
+    popMatrix();
+
+    pushMatrix();
+    translate(0, 0, -(bHeight - maxheight)  + 1);
+    lego();
+    drawContour();
+    popMatrix();
+
+   //animate Pins
+
+  }
+  
+  void animatePins(){
+    bHeight = midHeight + (finalHeight - midHeight)*(animCounter);
+    
+    animCounter+=0.0075;
+    if(animCounter>= 1.0){
+      animCounter =1.0;
+    }
+  }
+
+
+
+  void lego() {
+
     noStroke();
     fill(0);
     rect(posx, posy, tam, tam);
-  }
 
-  void lego() {
     stroke(200);
     noFill();
     int eTam = 2;

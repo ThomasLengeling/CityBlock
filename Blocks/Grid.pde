@@ -1,5 +1,6 @@
 class Grid {
   ArrayList<Block> grid;
+  ArrayList<GroupBlock> groupBlock;
   ArrayList<Road> road;
 
   int gridX;
@@ -26,24 +27,29 @@ class Grid {
 
 
   //build grid
-  Grid(int startPosX, int startPosY, int gridX, int gridY) {
+  Grid(int startPosX, int startPosY, int gridX, int gridY, int bSize) {
     this.gridX = gridX;
     this.gridY = gridY;
 
     this.startPosX = startPosX;
     this.startPosY = startPosY;
 
+    this.blockSize = bSize;
+
     this.endPosX = gridX * blockSize + stepX * (gridX - 1); 
     this.endPosY = gridY * blockSize + stepY * (gridY - 1);
 
     grid = new ArrayList<Block>();
     road = new ArrayList<Road>();
+    groupBlock = new ArrayList<GroupBlock>();
+
+    //create
     createGrid();
   }
 
   void draw() {
     for (Block bl : grid) {
-      bl.draw();
+      //bl.draw();
       if (currentBlock != null) {
         if (bl.getId() == currentBlock.getId()) {
           bl.enableSelected();
@@ -51,8 +57,16 @@ class Grid {
           bl.disableSelection();
         }
       }
-      bl.lego();
-      bl.drawContour();
+      //2d
+      //bl.lego();
+      //bl.drawContour();
+
+      //draw 3d
+
+      bl.drawBox();
+      if (activeAnimation) {
+        bl.animatePins();
+      }
     }
 
     //
@@ -98,7 +112,7 @@ class Grid {
       for (int j = 0; j < gridY; j++) {
         int posx = startPosX + blockSize * i + stepX * i;
         int posy = startPosY + blockSize * j + stepY * j;
-        Block block  = new Block(posx, posy);
+        Block block  = new Block(posx, posy, blockSize);
         block.setBlockSize(blockSize);
         block.setId(j + i * gridY);
         grid.add(block);
@@ -119,6 +133,11 @@ class Grid {
         road.add(rd);
       }
     }
+  }
+
+  //creating block
+  void createGroupBlock(GroupBlock blocks) {
+    groupBlock.add(blocks);
   }
 
   /*
@@ -169,17 +188,24 @@ class Grid {
   }
 
   //set colors of the blocks based on the map
-  void setGridColors(PImage map) {
-    PImage copyMap = map;
-    copyMap.resize(endPosX, endPosY);
+  void setGridColors(PImage map, PImage cMap) {
+    PImage densityMap = map;
+    PImage colorMap = cMap; 
+    densityMap.resize(1920, 1080+blockSize/2);
+    colorMap.resize(1920, 1080+blockSize/2);
     for (Block bl : grid) {
       int cx = bl.getCenterX();
       int cy = bl.getCenterY();
 
 
-      color mapc = copyMap.get(cx, cy);
+      color mapc = colorMap.get(cx, cy);
+      color mapd = densityMap.get(cx, cy);
+      //color
       bl.setType(4);
       bl.setColorMap(mapc);
+      //height
+      int colorHeight = int(red(mapd));
+      bl.updateHeight(colorHeight);
     }
   }
 
@@ -191,5 +217,4 @@ class Grid {
 
     createGrid();
   }
-  
 }

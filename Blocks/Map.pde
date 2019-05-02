@@ -1,22 +1,19 @@
-class Map{
-  PImage img;
-  
-  Map(){
-    img = loadImage("map.jpg");
+class Map {
+  PImage imgColor;
+  PImage imgDensity;
+
+  Map() {
+    imgDensity = loadImage("grd_boston.png");
+    imgColor = loadImage("grd_boston_color.png");
+  }
+
+  PImage getImgColor() {
+    return imgColor;
   }
   
-  void draw(int x, int y, int w, int h){
-    tint(255, 120);
-    image(img, x, y, w, h);
+    PImage getImgDensity() {
+    return imgDensity;
   }
-  
-  PImage getImg(){
-    return img;
-  }
-  
-  //get the pixels
-  
-  
-  
-  
+
+
 }
